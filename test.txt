@@ -1,1 +1,0 @@
-This is a sample place to implement the Django project

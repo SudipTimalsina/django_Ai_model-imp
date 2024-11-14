@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>HTML 5 Boilerplate</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+      table, th, td {
+        border: 1px solid black;
+      }
+    </style>
+  </head>
+  <body>
+    <script src="index.js"></script>
+    <h1>This is the file returned from the index.html of template folder residing under the home file</h1>
+
+    <table>
+        <tr>
+          <th>Sn.No</th>
+          <th>Name</th>
+          <th>Age</th>
+        </tr>
+        {% for index in peoples%}
+        <tr>
+          <td>{{forloop.counter}}</td>
+          <td>{{index.name}}</td>
+          <td>{{index.age}}</td>
+        </tr>
+
+        {% endfor %}
+
+    </table>
+  </body>
+</html>

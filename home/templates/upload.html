@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Birdy - Upload Audio</title>
+    <!-- Google Fonts -->
+    <link
+      href="https://fonts.googleapis.com/css2?family=Nunito:wght@300;400;600&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      /* Existing styles... */
+      body {
+        font-family: "Nunito", sans-serif;
+        background: #e3f2fd;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+      }
+
+      h1 {
+        color: #0277bd;
+      }
+
+      .upload-container {
+        background-color: rgba(255, 255, 255, 0.9);
+        padding: 40px;
+        border-radius: 10px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        text-align: center;
+        max-width: 500px;
+      }
+
+      .bird-info {
+        margin-top: 20px;
+        padding: 10px;
+        background-color: #e0f7fa;
+        border-radius: 5px;
+        text-align: left;
+      }
+
+      .bird-info h2 {
+        margin-bottom: 10px;
+      }
+
+      button {
+        background-color: #0288d1;
+        color: white;
+        padding: 10px 20px;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="upload-container">
+      <h1>Upload Bird Song</h1>
+      <p>Upload an audio file and let Birdy identify the bird!</p>
+      <form id="uploadForm" method="post" enctype="multipart/form-data">
+        {% csrf_token %} {{ form.as_p }}
+        <button type="submit">Upload</button>
+      </form>
+
+      <div id="result" class="bird-info" style="display: none">
+        <h2>Bird Class: <span id="birdClass"></span></h2>
+        <p><strong>Probabilities:</strong> <span id="probabilities"></span></p>
+        <p>
+          <strong>Scientific Name:</strong> <span id="scientificName"></span>
+        </p>
+        <p><strong>More Info:</strong> <span id="birdUrl"></span></p>
+      </div>
+    </div>
+
+    <script>
+      document
+        .getElementById("uploadForm")
+        .addEventListener("submit", function (event) {
+          event.preventDefault();
+
+          var formData = new FormData(this);
+
+          fetch("", {
+            method: "POST",
+            body: formData,
+          })
+            .then((response) => response.json())
+            .then((data) => {
+              // Display bird class name and probabilities
+              document.getElementById("birdClass").textContent = data.class_name;
+              document.getElementById("probabilities").textContent = data.probabilities[0].join(", ");
+             
+              document.getElementById("scientificName").textContent = data.bird_details.ScientificName || "N/A";
+              const birdUrlElement = document.getElementById("birdUrl");
+              if (data.bird_details.MoreInfo) {
+                birdUrlElement.innerHTML = `<a href="${data.bird_details.MoreInfo}" target="_blank" style="color: #0288d1; text-decoration: none;">More Info</a>`;
+              } else {
+                birdUrlElement.textContent = "N/A";
+              }
+              document.getElementById("result").style.display = "block";
+            })
+            .catch((error) => console.error("Error:", error));
+        });
+    </script>
+  </body>
+</html>

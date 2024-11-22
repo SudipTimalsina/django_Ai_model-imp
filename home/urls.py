@@ -1,6 +1,6 @@
 from django.urls import path
-from home import views
+from . import views
 
 urlpatterns = [
-    path('birdlist/',views.birdlistList.as_view()),
+    path('upload-audio/', views.upload_and_predict, name='upload_audio'),
 ]

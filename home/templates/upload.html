@@ -7,10 +7,8 @@
     <!-- Google Fonts -->
     <link
       href="https://fonts.googleapis.com/css2?family=Nunito:wght@300;400;600&display=swap"
-      rel="stylesheet"
     />
     <style>
-      /* Existing styles... */
       body {
         font-family: "Nunito", sans-serif;
         background: #e3f2fd;
@@ -52,6 +50,16 @@
         border: none;
         border-radius: 5px;
         cursor: pointer;
+        margin: 5px;
+      }
+
+      audio {
+        margin-top: 10px;
+      }
+
+      #playAudioBtn,
+      #removeFileBtn {
+        display: none;
       }
     </style>
   </head>
@@ -61,8 +69,11 @@
       <p>Upload an audio file and let Birdy identify the bird!</p>
       <form id="uploadForm" method="post" enctype="multipart/form-data">
         {% csrf_token %} {{ form.as_p }}
-        <button type="submit">Upload</button>
+        <button type="submit">Analyze</button>
       </form>
+      <button id="playAudioBtn">Play Audio</button>
+      <button id="removeFileBtn">Remove File</button>
+      <audio id="uploadedAudio" controls></audio>
 
       <div id="result" class="bird-info" style="display: none">
         <h2>Bird Class: <span id="birdClass"></span></h2>
@@ -75,12 +86,31 @@
     </div>
 
     <script>
+      const audioInput = document.querySelector('input[type="file"]');
+      const playAudioBtn = document.getElementById("playAudioBtn");
+      const removeFileBtn = document.getElementById("removeFileBtn");
+      const uploadedAudio = document.getElementById("uploadedAudio");
+
+      // Listen for file selection
+      audioInput.addEventListener("change", function () {
+        if (audioInput.files.length > 0) {
+          const audioURL = URL.createObjectURL(audioInput.files[0]);
+
+          // Set the audio source to the uploaded file
+          uploadedAudio.src = audioURL;
+          uploadedAudio.style.display = "block";
+          playAudioBtn.style.display = "inline-block";
+          removeFileBtn.style.display = "inline-block";
+        }
+      });
+
+      // Handle the form submission for upload
       document
         .getElementById("uploadForm")
         .addEventListener("submit", function (event) {
           event.preventDefault();
 
-          var formData = new FormData(this);
+          const formData = new FormData(this);
 
           fetch("", {
             method: "POST",
@@ -88,11 +118,11 @@
           })
             .then((response) => response.json())
             .then((data) => {
+              console.log(data.class_name,data.probabilities,data.bird_details)
               // Display bird class name and probabilities
               document.getElementById("birdClass").textContent = data.class_name;
-              document.getElementById("probabilities").textContent = data.probabilities[0].join(", ");
-             
-              document.getElementById("scientificName").textContent = data.bird_details.ScientificName || "N/A";
+              document.getElementById("probabilities").textContent = data.probabilities.join(", ");
+              document.getElementById("scientificName").textContent = data.bird_details.ScientificName || "";
               const birdUrlElement = document.getElementById("birdUrl");
               if (data.bird_details.MoreInfo) {
                 birdUrlElement.innerHTML = `<a href="${data.bird_details.MoreInfo}" target="_blank" style="color: #0288d1; text-decoration: none;">More Info</a>`;
@@ -103,6 +133,21 @@
             })
             .catch((error) => console.error("Error:", error));
         });
+
+      // Play the uploaded audio when "Play Audio" is clicked
+      playAudioBtn.addEventListener("click", () => {
+        uploadedAudio.play();
+      });
+
+      // Remove the uploaded file and reset the form
+      removeFileBtn.addEventListener("click", () => {
+        uploadedAudio.src = ""; // Clear the audio source
+        uploadedAudio.style.display = "none"; // Hide the audio element
+        playAudioBtn.style.display = "none"; // Hide the play button
+        removeFileBtn.style.display = "none"; // Hide the remove button
+        document.getElementById("uploadForm").reset(); // Reset the form
+        document.getElementById("result").style.display = "none"; // Hide bird details
+      });
     </script>
   </body>
 </html>

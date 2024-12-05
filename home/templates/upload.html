@@ -7,80 +7,44 @@
     <!-- Google Fonts -->
     <link
       href="https://fonts.googleapis.com/css2?family=Nunito:wght@300;400;600&display=swap"
+      rel="stylesheet"
     />
-    <style>
-      body {
-        font-family: "Nunito", sans-serif;
-        background: #e3f2fd;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        height: 100vh;
-      }
-
-      h1 {
-        color: #0277bd;
-      }
-
-      .upload-container {
-        background-color: rgba(255, 255, 255, 0.9);
-        padding: 40px;
-        border-radius: 10px;
-        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-        text-align: center;
-        max-width: 500px;
-      }
-
-      .bird-info {
-        margin-top: 20px;
-        padding: 10px;
-        background-color: #e0f7fa;
-        border-radius: 5px;
-        text-align: left;
-      }
-
-      .bird-info h2 {
-        margin-bottom: 10px;
-      }
-
-      button {
-        background-color: #0288d1;
-        color: white;
-        padding: 10px 20px;
-        border: none;
-        border-radius: 5px;
-        cursor: pointer;
-        margin: 5px;
-      }
-
-      audio {
-        margin-top: 10px;
-      }
-
-      #playAudioBtn,
-      #removeFileBtn {
-        display: none;
-      }
-    </style>
+    <script src="https://cdn.tailwindcss.com"></script>
   </head>
-  <body>
-    <div class="upload-container">
-      <h1>Upload Bird Song</h1>
-      <p>Upload an audio file and let Birdy identify the bird!</p>
-      <form id="uploadForm" method="post" enctype="multipart/form-data">
+  <body class="font-nunito bg-blue-100 flex justify-center items-center h-screen">
+    <div class="bg-white bg-opacity-90 p-10 rounded-lg shadow-lg max-w-lg text-center">
+      <h1 class="text-3xl font-semibold text-blue-700 mb-4">Upload Bird Song</h1>
+      <p class="mb-4">Upload an audio file and let Birdy identify the bird!</p>
+      <form id="uploadForm" method="post" enctype="multipart/form-data" class="mb-4">
         {% csrf_token %} {{ form.as_p }}
-        <button type="submit">Analyze</button>
+        <button
+          type="submit"
+          class="bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded mb-2"
+        >
+          Analyze
+        </button>
       </form>
-      <button id="playAudioBtn">Play Audio</button>
-      <button id="removeFileBtn">Remove File</button>
-      <audio id="uploadedAudio" controls></audio>
+      <button
+        id="playAudioBtn"
+        class="bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded mb-2 hidden"
+      >
+        Play Audio
+      </button>
+      <button
+        id="removeFileBtn"
+        class="bg-red-500 hover:bg-red-600 text-white font-semibold py-2 px-4 rounded mb-2 hidden"
+      >
+        Remove File
+      </button>
+      <audio id="uploadedAudio" controls class="mt-2 hidden"></audio>
 
-      <div id="result" class="bird-info" style="display: none">
-        <h2>Bird Class: <span id="birdClass"></span></h2>
+      <div
+        id="result"
+        class="bg-cyan-100 p-4 rounded mt-4 text-left hidden"
+      >
+        <h2 class="text-xl font-bold mb-2">Bird Class: <span id="birdClass"></span></h2>
         <p><strong>Probabilities:</strong> <span id="probabilities"></span></p>
-        <p>
-          <strong>Scientific Name:</strong> <span id="scientificName"></span>
-        </p>
+        <p><strong>Scientific Name:</strong> <span id="scientificName"></span></p>
         <p><strong>More Info:</strong> <span id="birdUrl"></span></p>
       </div>
     </div>
@@ -98,9 +62,9 @@
 
           // Set the audio source to the uploaded file
           uploadedAudio.src = audioURL;
-          uploadedAudio.style.display = "block";
-          playAudioBtn.style.display = "inline-block";
-          removeFileBtn.style.display = "inline-block";
+          uploadedAudio.classList.remove("hidden");
+          playAudioBtn.classList.remove("hidden");
+          removeFileBtn.classList.remove("hidden");
         }
       });
 
@@ -118,18 +82,20 @@
           })
             .then((response) => response.json())
             .then((data) => {
-              console.log(data.class_name,data.probabilities,data.bird_details)
+              console.log(data.class_name, data.probabilities, data.bird_details);
               // Display bird class name and probabilities
               document.getElementById("birdClass").textContent = data.class_name;
-              document.getElementById("probabilities").textContent = data.probabilities.join(", ");
-              document.getElementById("scientificName").textContent = data.bird_details.ScientificName || "";
+              document.getElementById("probabilities").textContent =
+                data.probabilities.join(", ");
+              document.getElementById("scientificName").textContent =
+                data.bird_details.ScientificName || "";
               const birdUrlElement = document.getElementById("birdUrl");
               if (data.bird_details.MoreInfo) {
-                birdUrlElement.innerHTML = `<a href="${data.bird_details.MoreInfo}" target="_blank" style="color: #0288d1; text-decoration: none;">More Info</a>`;
+                birdUrlElement.innerHTML = `<a href="${data.bird_details.MoreInfo}" target="_blank" class="text-blue-600 underline">More Info</a>`;
               } else {
                 birdUrlElement.textContent = "N/A";
               }
-              document.getElementById("result").style.display = "block";
+              document.getElementById("result").classList.remove("hidden");
             })
             .catch((error) => console.error("Error:", error));
         });
@@ -139,14 +105,13 @@
         uploadedAudio.play();
       });
 
-      // Remove the uploaded file and reset the form
       removeFileBtn.addEventListener("click", () => {
         uploadedAudio.src = ""; // Clear the audio source
-        uploadedAudio.style.display = "none"; // Hide the audio element
-        playAudioBtn.style.display = "none"; // Hide the play button
-        removeFileBtn.style.display = "none"; // Hide the remove button
+        uploadedAudio.classList.add("hidden"); // Hide the audio element
+        playAudioBtn.classList.add("hidden"); // Hide the play button
+        removeFileBtn.classList.add("hidden"); // Hide the remove button
         document.getElementById("uploadForm").reset(); // Reset the form
-        document.getElementById("result").style.display = "none"; // Hide bird details
+        document.getElementById("result").classList.add("hidden"); // Hide bird details
       });
     </script>
   </body>

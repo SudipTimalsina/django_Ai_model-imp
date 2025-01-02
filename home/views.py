@@ -1,5 +1,6 @@
 import numpy as np
 import librosa
+import os
 from django.conf import settings
 from django.shortcuts import render
 from django.core.files.storage import default_storage
@@ -7,45 +8,56 @@ from django.http import JsonResponse
 import tensorflow as tf
 from .forms import AudioUploadForm
 from .models import birdlist
+from pydub import AudioSegment  # For handling audio format conversion
 
-# If model loading raises errors, try reconstructing the model
 def build_model():
     model = tf.keras.Sequential()
-    model.add(tf.keras.layers.Input(shape=(251, 21)))  # Replace batch_input_shape with Input layer
+    model.add(tf.keras.layers.Input(shape=(251, 21)))  
 
-    # Recreate GRU layer without the 'batch_input_shape' and 'time_major' arguments
-    model.add(tf.keras.layers.GRU(64, return_sequences=True))  # Modify units as per your model
+    model.add(tf.keras.layers.GRU(64, return_sequences=True))  
 
-    # Add other layers accordingly based on your model architecture
-    model.add(tf.keras.layers.Dense(3, activation='softmax'))  # Example final layer
+    model.add(tf.keras.layers.Dense(3, activation='softmax'))  
 
     model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
 
     return model
 
-# Global variable to hold the model
+
 model = None
 
 def load_model():
     global model
     try:
-        # Try loading the existing model
         model = tf.keras.models.load_model(settings.BASE_DIR / 'my_model1.keras')
         print("Model loaded successfully")
     except Exception as e:
         print(f"Model loading failed: {e}")
-        # If loading fails, try building a new model (if possible)
         model = build_model()
 
-# Load model initially
+
 load_model()
 
-# Class Mapping
+
 class_names = {0: 'Scarlet-chested Sunbird', 1: 'Egyptian Goose', 2: 'Woodland Kingfisher'}
+
+def convert_audio_to_wav(file_path):
+    """
+    Converts the audio file to a WAV format if it's not already in WAV format.
+    """
+    try:
+        audio = AudioSegment.from_file(file_path)
+        wav_path = file_path.replace(".mp3", ".wav").replace(".flac", ".wav")  # Handles .mp3 and .flac
+        audio.export(wav_path, format="wav")
+        return wav_path
+    except Exception as e:
+        print(f"Error converting audio: {e}")
+        return file_path  # If conversion fails, return original path
 
 def predict_audio(file_path):
     try:
-        # Load the audio file
+        # Convert to WAV if needed
+        file_path = convert_audio_to_wav(file_path)
+
         audio, sr = librosa.load(file_path, sr=None)
 
         # Extract MFCCs (21 MFCCs to match model input)
@@ -92,14 +104,19 @@ def upload_and_predict(request):
         if form.is_valid():
             # Save the uploaded file temporarily
             audio_file = request.FILES['audio_file']
-            file_path = default_storage.save(f'temp/{audio_file.name}', audio_file)
-            file_path_full = default_storage.path(file_path)
+            file_path = os.path.join('temp', audio_file.name)
+
+            # Make sure the directory exists
+            os.makedirs(os.path.dirname(file_path), exist_ok=True)
+
+            file_path_full = default_storage.save(file_path, audio_file)
+            file_path_full = default_storage.path(file_path_full)
 
             # Make prediction
             class_name, probabilities = predict_audio(file_path_full)
 
             # Clean up the temporary file
-            default_storage.delete(file_path)
+            default_storage.delete(file_path_full)
 
             if class_name:
                 # Fetch additional bird information from the database
@@ -120,7 +137,7 @@ def upload_and_predict(request):
                     'bird_details': bird_details
                 })
             else:
-                return JsonResponse({'error': 'Prediction failed'}, status=500)
+                return JsonResponse({'error': 'Prediction failed due to audio processing issues.'}, status=500)
 
     else:
         form = AudioUploadForm()

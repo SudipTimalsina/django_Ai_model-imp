@@ -99,9 +99,10 @@ def predict_audio(file_path):
         return None, None
 
 def upload_and_predict(request):
-    if request.method == 'POST':
-        form = AudioUploadForm(request.POST, request.FILES)
-        if form.is_valid():
+    try:
+        if request.method == 'POST':
+          form = AudioUploadForm(request.POST, request.FILES)
+          if form.is_valid():
             # Save the uploaded file temporarily
             audio_file = request.FILES['audio_file']
             file_path = os.path.join('temp', audio_file.name)
@@ -138,8 +139,6 @@ def upload_and_predict(request):
                 })
             else:
                 return JsonResponse({'error': 'Prediction failed due to audio processing issues.'}, status=500)
-
-    else:
-        form = AudioUploadForm()
-
-    return render(request, 'upload.html', {'form': form})
+    except Exception as e:
+        print(f"Error during prediction: {e}")
+        return None, None
